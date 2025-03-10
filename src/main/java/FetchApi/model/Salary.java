@@ -3,12 +3,22 @@ package FetchApi.model;
 import java.math.BigDecimal;
 
 
-public class Salary {
-    private int user_id;
-    private BigDecimal total_salary;
+import java.math.BigDecimal;
 
-    public Salary(int user_id, BigDecimal total_salary) {
-        this.user_id = user_id;
-        this.total_salary = total_salary;
+public class Salary {
+    private BigDecimal totalSalary;
+    private int userId;
+
+    public Salary(int userId, BigDecimal totalSalary) {  // Fixed constructor
+        this.userId = userId;
+        this.totalSalary = totalSalary;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public BigDecimal getTotalSalary() {
+        return totalSalary;
     }
 }

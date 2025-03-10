@@ -24,51 +24,49 @@ public class AttendanceService {
     private UserRepository usersRepository;
 
     public BigDecimal calculateSalary(int userId, LocalDate requestDate) {
-        // Ensure salary is generated only between the 1st and 5th of the month
-        int dayOfMonth = requestDate.getDayOfMonth();
-        if (dayOfMonth < 1 || dayOfMonth > 5) {
-            throw new IllegalArgumentException("Salary can only be generated between the 1st and 5th of the month.");
-        }
+        try {
+            // Ensure salary is generated only between the 1st and 5th of the month
+            int dayOfMonth = requestDate.getDayOfMonth();
+            if (dayOfMonth < 1 || dayOfMonth > 5) {
+                throw new IllegalArgumentException("Salary can only be generated between the 1st and 5th of the month.");
+            }
 
-        // Get the previous month
-        YearMonth previousMonth = YearMonth.from(requestDate.minusMonths(1));
+            // Get the previous month
+            YearMonth previousMonth = YearMonth.from(requestDate.minusMonths(1));
 
-        // Fetch attendance records for the previous month
-        List<Attendance> attendanceRecords = attendanceRepository.findByUserId(userId);
+            // Fetch attendance records for the previous month
+            List<Attendance> attendanceRecords = attendanceRepository.findByUserId(userId);
+            if (attendanceRecords == null || attendanceRecords.isEmpty()) {
+                return BigDecimal.ZERO; // No attendance = no salary
+            }
 
-        if (attendanceRecords == null || attendanceRecords.isEmpty()) {
-            return BigDecimal.ZERO; // No attendance = no salary
-        }
+            // Fetch user details safely
+            BigDecimal presentWage = BigDecimal.valueOf(1000);
+            BigDecimal halfDayWage = BigDecimal.valueOf(500);
 
-        // Fetch user details safely
-     //   Optional<Users> optionalUser = usersRepository.findById(userId);
-        BigDecimal presentWage = BigDecimal.valueOf(1000);
-        BigDecimal halfDayWage = BigDecimal.valueOf(500);
+            BigDecimal totalSalary = BigDecimal.ZERO;
 
-     /*   if (optionalUser.isPresent()) {
-            Users user = optionalUser.get();
-            presentWage = user.getPresent_wage();
-            halfDayWage = user.getHalf_day_wage();
-        }
-*/
-        // Calculate salary based on attendance
-        BigDecimal totalSalary = BigDecimal.ZERO;
-        for (Attendance record : attendanceRecords) {
-            LocalDate attendanceDate = record.getDate().toLocalDate();
-            if (attendanceDate.getMonthValue() == previousMonth.getMonthValue()) {
-                switch (record.getStatus()) {
-                    case PRESENT:
-                        totalSalary = totalSalary.add(presentWage);
-                        break;
-                    case HALF_DAY:
-                        totalSalary = totalSalary.add(halfDayWage);
-                        break;
-                    case ABSENT:
-                        break;
+            for (Attendance record : attendanceRecords) {
+                LocalDate attendanceDate = record.getDate().toLocalDate();
+                if (attendanceDate.getMonthValue() == previousMonth.getMonthValue()) {
+                    switch (record.getStatus()) {
+                        case PRESENT:
+                            totalSalary = totalSalary.add(presentWage);
+                            break;
+                        case HALF_DAY:
+                            totalSalary = totalSalary.add(halfDayWage);
+                            break;
+                        case ABSENT:
+                            break;
+                    }
                 }
             }
-        }
 
-        return totalSalary;
+            return totalSalary;
+        } catch (Exception e) {
+            // Log the error and rethrow a custom exception
+            throw new RuntimeException("Error calculating salary: " + e.getMessage(), e);
+        }
     }
+
 }
